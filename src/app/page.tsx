@@ -1,101 +1,194 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { ModeToggle } from "@/components/theme-toggle";
+import { TokenSelector } from "@/components/TokenSelector";
+
+interface Token {
+  address: string;
+  chainId: number;
+  decimals: number;
+  logoURI: string;
+  name: string;
+  symbol: string;
+  tags: string[];
+}
+
+interface ItemData {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  tokenMint: string;
+  tokenSymbol: string;
+}
+
+export default function PaymentPage() {
+  const searchParams = useSearchParams();
+
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [filteredTokens, setFilteredTokens] = useState<Token[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [itemData, setItemData] = useState<ItemData | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Parse item data from URL
+    const itemParam = searchParams?.get("item");
+    if (itemParam) {
+      try {
+        const decodedItem = JSON.parse(
+          decodeURIComponent(itemParam)
+        ) as ItemData;
+        setItemData(decodedItem);
+      } catch (error) {
+        console.error("Error parsing item data:", error);
+      }
+    }
+
+    const fetchTokens = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          "https://tokens.jup.ag/tokens?tags=verified"
+        );
+        const data = await response.json();
+        setTokens(data);
+        setFilteredTokens(data.slice(0, 50));
+
+        // If we have item data, find the matching token
+        if (itemData?.tokenMint) {
+          const itemToken = data.find(
+            (token: Token) => token.address === itemData.tokenMint
+          );
+          if (itemToken) {
+            setSelectedToken(itemToken);
+          } else {
+            // Fallback to USDC if specified token not found
+            const defaultToken = data.find(
+              (token: Token) => token.symbol === "USDC"
+            );
+            if (defaultToken) {
+              setSelectedToken(defaultToken);
+            }
+          }
+        } else {
+          // Default to USDC if no item data
+          const defaultToken = data.find(
+            (token: Token) => token.symbol === "USDC"
+          );
+          if (defaultToken) {
+            setSelectedToken(defaultToken);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching tokens:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTokens();
+  }, [searchParams, itemData?.tokenMint]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  // Use default item if none passed
+  const displayItem = itemData || {
+    id: "default-item",
+    name: "Limited Edition NFT",
+    description: "Exclusive digital collectible from our premium collection",
+    price: 10,
+    image: "/api/placeholder/300/300",
+    tokenMint: "FSxJ85FXVsXSr51SeWf9ciJWTcRnqKFSmBgRDeL3KyWw",
+    tokenSymbol: "USDC",
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-600">
+      <div className="absolute top-4 left-4">
+        <ModeToggle />
+      </div>
+      <div className="container mx-auto py-12 px-4 max-w-6xl">
+        <div>
+          <h1 className="text-3xl font-bold mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-gray-600 dark:from-blue-400 dark:to-purple-400">
+            Complete Your Purchase
+          </h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {/* Item details */}
+          <div>
+            <div className="h-fit overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
+                <h2 className="text-xl text-blue-800 dark:text-blue-200 p-2">
+                  Item Details
+                </h2>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-col items-center mb-4">
+                  <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md">
+                    <img
+                      src={displayItem.image}
+                      alt={displayItem.name}
+                      className="w-full max-w-xs mx-auto object-cover"
+                    />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                    {displayItem.name}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-300 mt-3 text-center">
+                    {displayItem.description}
+                  </p>
+                  <div className="mt-6 text-lg font-medium px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 shadow-sm">
+                    Price: {displayItem.price} {displayItem.tokenSymbol}
+                  </div>
+                  <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    Token Mint: {displayItem.tokenMint.slice(0, 8)}...
+                    {displayItem.tokenMint.slice(-8)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/*  Payment options */}
+          <div>
+            <div className="h-fit rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
+                <h2 className="text-xl text-blue-800 dark:text-blue-200 p-2">
+                  Payment Details
+                </h2>
+              </div>
+              <div className="p-6">
+                <TokenSelector
+                  tokens={tokens}
+                  filteredTokens={filteredTokens}
+                  setFilteredTokens={setFilteredTokens}
+                  selectedToken={selectedToken}
+                  setSelectedToken={setSelectedToken}
+                  isLoading={isLoading}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                />
+                <div className="pt-4">
+                  <button className="w-full max-h-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all grid place-content-center text-white duration-300">
+                    Proceed to Payment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
