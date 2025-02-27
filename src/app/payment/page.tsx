@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { TokenSelector } from "@/components/TokenSelector";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { swapAndPay } from "@/utils/swapAndPay";
 import {
   ItemData,
   PricesResponse,
@@ -14,12 +17,17 @@ import { toast } from "react-toastify";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
+  const wallet = useWallet();
+  const connection = new Connection(
+    process.env.NEXT_PUBLIC_SOLANA_RPC || "https://api.devnet.solana.com"
+  );
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [filteredTokens, setFilteredTokens] = useState<Token[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [itemData, setItemData] = useState<ItemData | null>(null);
   const [usdcDecimals, setUsdcDecimals] = useState<number | null>(null);
@@ -28,7 +36,9 @@ export default function PaymentPage() {
   );
   const [prices, setPrices] = useState<PricesResponse | null>(null);
   const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
-  const [quote, setQuote] = useState<QuoteResponse | null>(null);
+  const [quote] = useState<QuoteResponse | null>(null);
+
+  console.log(quote, isProcessing);
 
   const fetchTokenDecimals = async (
     mintAddress: string,
@@ -49,6 +59,40 @@ export default function PaymentPage() {
     }
   };
 
+  const handlePayment = async () => {
+    if (!wallet.connected || !wallet.publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    if (!selectedToken || amountToSwap === null || !itemData) {
+      toast.error("Missing required information for payment");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      const recipientWallet = new PublicKey(itemData.sellerWallet);
+
+      const result = await swapAndPay({
+        connection,
+        inputMint: new PublicKey(selectedToken.address),
+        amount: amountToSwap,
+        recipientWallet,
+        wallet: wallet,
+        slippageBps: 50,
+      });
+
+      toast.success(`Payment successful! Transaction: ${result.signature}`);
+    } catch (error) {
+      console.error("Payment failed:", error);
+      toast.error(`Payment failed`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const fetchPrices = async (inputMint: string) => {
     const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     try {
@@ -60,52 +104,6 @@ export default function PaymentPage() {
       setPrices(response.data);
     } catch (error) {
       console.error("Error fetching prices:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error message:", error.message);
-      } else {
-        console.error("Unexpected error:", error);
-      }
-    }
-  };
-
-  const fetchQuote = async (inputMint: string, amount: number) => {
-    const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-    const slippageBps = 50;
-    const swapMode = "ExactIn";
-
-    if (inputMint === outputMint) {
-      toast.error(
-        "Input and output tokens cannot be the same. Please select a different token."
-      );
-      return;
-    }
-
-    if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid amount greater than zero.");
-      return;
-    }
-
-    console.log("Amount:" + amount);
-    const amountToSend = Math.ceil(amount);
-    console.log("Amount To Send: " + amountToSend);
-
-    try {
-      const response = await axios.get(`https://api.jup.ag/swap/v1/quote`, {
-        params: {
-          inputMint,
-          outputMint,
-          amount: amountToSend.toString(), // Ensure amount is sent as a string
-          slippageBps,
-          swapMode,
-        },
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      setQuote(response.data);
-      console.log(response.data);
-    } catch (error) {
-      console.error("Error fetching quote:", error);
       if (axios.isAxiosError(error)) {
         console.error("Axios error message:", error.message);
       } else {
@@ -146,12 +144,6 @@ export default function PaymentPage() {
       }
     }
   }, [prices, itemData, usdcDecimals, inputTokenDecimals]);
-
-  useEffect(() => {
-    if (selectedToken && amountToSwap !== null) {
-      fetchQuote(selectedToken.address, amountToSwap);
-    }
-  }, [selectedToken, amountToSwap]);
 
   useEffect(() => {
     setMounted(true);
@@ -290,7 +282,10 @@ export default function PaymentPage() {
                   setSearchQuery={setSearchQuery}
                 />
                 <div className="pt-4">
-                  <button className="w-full max-h-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all grid place-content-center text-white duration-300">
+                  <button
+                    onClick={handlePayment}
+                    className="w-full max-h-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all grid place-content-center text-white duration-300"
+                  >
                     Proceed to Payment
                   </button>
                 </div>
