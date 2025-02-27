@@ -19,7 +19,7 @@ const ProductPage = () => {
 
   const handleBuyClick = () => {
     const itemData = encodeURIComponent(JSON.stringify(mockItem));
-    router.push(`/?item=${itemData}`);
+    router.push(`/payment?item=${itemData}`);
   };
 
   return (
@@ -27,6 +27,7 @@ const ProductPage = () => {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
         <div className="relative">
           <img
+            width={24}
             src={mockItem.image}
             alt={mockItem.name}
             className="w-full h-64 object-cover"

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ModeToggle } from "@/components/theme-toggle";
 import { TokenSelector } from "@/components/TokenSelector";
-import Image from "next/image";
 
 interface Token {
   address: string;
@@ -40,8 +39,6 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setMounted(true);
-
-    // Parse item data from URL
     const itemParam = searchParams?.get("item");
     if (itemParam) {
       try {
@@ -64,7 +61,6 @@ export default function PaymentPage() {
         setTokens(data);
         setFilteredTokens(data.slice(0, 50));
 
-        // If we have item data, find the matching token
         if (itemData?.tokenMint) {
           const itemToken = data.find(
             (token: Token) => token.address === itemData.tokenMint
@@ -72,7 +68,6 @@ export default function PaymentPage() {
           if (itemToken) {
             setSelectedToken(itemToken);
           } else {
-            // Fallback to USDC if specified token not found
             const defaultToken = data.find(
               (token: Token) => token.symbol === "USDC"
             );
@@ -81,7 +76,6 @@ export default function PaymentPage() {
             }
           }
         } else {
-          // Default to USDC if no item data
           const defaultToken = data.find(
             (token: Token) => token.symbol === "USDC"
           );
@@ -130,7 +124,7 @@ export default function PaymentPage() {
                 <div className="flex flex-col items-center mb-4">
                   <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md">
                     {displayItem ? (
-                      <Image
+                      <img
                         src={displayItem?.image}
                         alt={displayItem?.name}
                         className="w-full max-w-xs mx-auto object-cover"

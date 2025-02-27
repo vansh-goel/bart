@@ -12,22 +12,32 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { useUserContext } from "@/context/UserContext";
+import dynamic from "next/dynamic";
+
+const WalletMultiButtonDynamic = dynamic(
+  async () =>
+    (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
+  { ssr: false }
+);
 
 function LandingPage() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
-  const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
   const wallet = useWallet();
   const router = useRouter();
+
+  const { email, setEmail } = useUserContext();
+  const { setWalletAddress } = useUserContext();
 
   useEffect(() => {
     const sessionToken = Cookies.get("userSession");
@@ -37,13 +47,18 @@ function LandingPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (wallet.publicKey) {
+      setWalletAddress(wallet.publicKey.toString());
+    }
+  }, [wallet.publicKey]);
+
   const handleOpenModal = () => {
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setEmail("");
     setPassword("");
   };
 
@@ -117,18 +132,18 @@ function LandingPage() {
               Docs
             </motion.a>
 
-            <motion.button
+            <motion.div
               whileHover={{ scale: 1.05 }}
               className="z-10w transition-colors duration-300"
             >
               <Dialog>
-                <DialogTrigger>
+                <>
                   <div id="get-started" className="z-10">
-                    <WalletMultiButton />
+                    <WalletMultiButtonDynamic />
                   </div>
-                </DialogTrigger>
+                </>
               </Dialog>
-            </motion.button>
+            </motion.div>
 
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -183,17 +198,15 @@ function LandingPage() {
               USDC.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <motion.button
+              <motion.div
                 onClick={handleOpenModal} // Open modal
                 whileHover={{ scale: 1.05 }}
                 className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-lg dark:bg-purple-500 dark:hover:bg-purple-600 transition-colors duration-300"
               >
                 Get Started
-              </motion.button>
+              </motion.div>
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger>
-                  <button className="hidden"></button>{" "}
-                </DialogTrigger>
+                <DialogTrigger></DialogTrigger>
                 <DialogContent>
                   {wallet.publicKey ? (
                     <div>
