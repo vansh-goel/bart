@@ -9,11 +9,11 @@ import { swapAndPay } from "@/utils/swapAndPay";
 import {
   ItemData,
   PricesResponse,
-  QuoteResponse,
   Token,
 } from "@/types/jupiterApiResponseTypes";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Loader } from "lucide-react";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -36,9 +36,6 @@ export default function PaymentPage() {
   );
   const [prices, setPrices] = useState<PricesResponse | null>(null);
   const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
-  const [quote] = useState<QuoteResponse | null>(null);
-
-  console.log(quote, isProcessing);
 
   const fetchTokenDecimals = async (
     mintAddress: string,
@@ -286,7 +283,14 @@ export default function PaymentPage() {
                     onClick={handlePayment}
                     className="w-full max-h-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all grid place-content-center text-white duration-300"
                   >
-                    Proceed to Payment
+                    {isProcessing ? (
+                      <div className="flex gap-2 items-center">
+                        Processing
+                        <Loader className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      "Proceed to Payment"
+                    )}
                   </button>
                 </div>
               </div>
