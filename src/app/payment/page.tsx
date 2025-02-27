@@ -2,29 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ModeToggle } from "@/components/theme-toggle";
 import { TokenSelector } from "@/components/TokenSelector";
-
-interface Token {
-  address: string;
-  chainId: number;
-  decimals: number;
-  logoURI: string;
-  name: string;
-  symbol: string;
-  tags: string[];
-}
-
-interface ItemData {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  tokenMint: string;
-  tokenSymbol: string;
-  sellerWallet: string;
-}
+import {
+  ItemData,
+  PricesResponse,
+  QuoteResponse,
+  Token,
+} from "@/types/jupiterApiResponseTypes";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -36,6 +22,136 @@ export default function PaymentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [itemData, setItemData] = useState<ItemData | null>(null);
+  const [usdcDecimals, setUsdcDecimals] = useState<number | null>(null);
+  const [inputTokenDecimals, setInputTokenDecimals] = useState<number | null>(
+    null
+  );
+  const [prices, setPrices] = useState<PricesResponse | null>(null);
+  const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
+  const [quote, setQuote] = useState<QuoteResponse | null>(null);
+
+  const fetchTokenDecimals = async (
+    mintAddress: string,
+    setDecimals: (decimals: number) => void
+  ) => {
+    try {
+      const response = await axios.get(
+        `https://tokens.jup.ag/tokens/v1/token/${mintAddress}`
+      );
+      setDecimals(response.data.decimals);
+    } catch (error) {
+      console.error("Error fetching token decimals:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error message:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
+    }
+  };
+
+  const fetchPrices = async (inputMint: string) => {
+    const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    try {
+      const response = await axios.get(`https://api.jup.ag/price/v2`, {
+        params: {
+          ids: `${inputMint},${outputMint}`,
+        },
+      });
+      setPrices(response.data);
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error message:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
+    }
+  };
+
+  const fetchQuote = async (inputMint: string, amount: number) => {
+    const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const slippageBps = 50;
+    const swapMode = "ExactIn";
+
+    if (inputMint === outputMint) {
+      toast.error(
+        "Input and output tokens cannot be the same. Please select a different token."
+      );
+      return;
+    }
+
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount greater than zero.");
+      return;
+    }
+
+    console.log("Amount:" + amount);
+    const amountToSend = Math.ceil(amount);
+    console.log("Amount To Send: " + amountToSend);
+
+    try {
+      const response = await axios.get(`https://api.jup.ag/swap/v1/quote`, {
+        params: {
+          inputMint,
+          outputMint,
+          amount: amountToSend.toString(), // Ensure amount is sent as a string
+          slippageBps,
+          swapMode,
+        },
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      setQuote(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching quote:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error message:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchTokenDecimals(
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      setUsdcDecimals
+    );
+  }, []);
+
+  useEffect(() => {
+    if (selectedToken) {
+      fetchTokenDecimals(selectedToken.address, setInputTokenDecimals);
+      fetchPrices(selectedToken.address);
+    }
+  }, [selectedToken]);
+
+  useEffect(() => {
+    if (prices && itemData && usdcDecimals && inputTokenDecimals) {
+      const inputPrice = parseFloat(
+        prices?.data[selectedToken?.address || ""]?.price || "0"
+      );
+      const outputPrice = parseFloat(
+        prices?.data["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"]?.price ||
+          "0"
+      );
+      const itemPrice = itemData.price;
+
+      if (inputPrice && outputPrice) {
+        const calculatedAmount = (outputPrice / inputPrice) * itemPrice;
+        const amountToSwap = calculatedAmount * 10 ** inputTokenDecimals;
+        setAmountToSwap(amountToSwap);
+      }
+    }
+  }, [prices, itemData, usdcDecimals, inputTokenDecimals]);
+
+  useEffect(() => {
+    if (selectedToken && amountToSwap !== null) {
+      fetchQuote(selectedToken.address, amountToSwap);
+    }
+  }, [selectedToken, amountToSwap]);
 
   useEffect(() => {
     setMounted(true);
@@ -101,8 +217,10 @@ export default function PaymentPage() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-600">
-      <div className="absolute top-4 left-4">
-        <ModeToggle />
+      <div className="absolute flex gap-2 items-center top-4 left-4">
+        <h2 className="text-2xl font-semibold text-center text-gray-600 dark:text-gray-300">
+          Powered by <span className="text-purple-600">Bart</span>
+        </h2>
       </div>
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div>

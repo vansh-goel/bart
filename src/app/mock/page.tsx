@@ -2,9 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const ProductPage = () => {
   const router = useRouter();
+  const wallet = useWallet();
 
   // Mock item data
   const mockItem = {
@@ -15,6 +17,7 @@ const ProductPage = () => {
     image: "/item.png",
     tokenMint: "FSxJ85FXVsXSr51SeWf9ciJWTcRnqKFSmBgRDeL3KyWw",
     tokenSymbol: "USDC",
+    sellerWallet: `${wallet.publicKey}`,
   };
 
   const handleBuyClick = () => {
