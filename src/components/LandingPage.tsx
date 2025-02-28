@@ -87,7 +87,7 @@ function LandingPage() {
 
   if (!mounted) return null;
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-white transition-colors duration-300">
       {/* Navigation */}
       <nav className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
@@ -230,7 +230,7 @@ function LandingPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
-                          className="mb-2 p-2 border border-black/80 rounded"
+                          className="mb-2 p-2 border border-black/80 bg-white rounded"
                         />
                         <input
                           type="password"
@@ -238,7 +238,7 @@ function LandingPage() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          className="mb-2 p-2 border border-black/80 rounded"
+                          className="mb-2 p-2 border border-black/80 bg-white rounded"
                         />
                         <button
                           type="submit"
@@ -292,12 +292,12 @@ function LandingPage() {
                       <span className="text-purple-600 dark:text-purple-400">
                         import
                       </span>{" "}
-                      {"{"} BartPayment {"}"}{" "}
+                      {"{"} Lorem ipsum {"}"}{" "}
                       <span className="text-purple-600 dark:text-purple-400">
                         from
                       </span>{" "}
                       <span className="text-green-600 dark:text-green-400">
-                        &apos;@bart/react&apos;
+                        &apos;@lorem/ipsum&apos;
                       </span>
                       ;
                     </div>
@@ -310,7 +310,7 @@ function LandingPage() {
                       &nbsp;&nbsp;onSuccess={"{handleSuccess}"}
                     </div>
                     <div className="mb-1">
-                      &nbsp;&nbsp;label=&quot;Buy Premium Plan&quot;
+                      &nbsp;&nbsp;label=&quot;PlaceHolder&quot;
                     </div>
                     <div>{"/>  // That's it!"}</div>
                   </div>
@@ -325,7 +325,7 @@ function LandingPage() {
                   }}
                   className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg w-full max-w-xs mx-auto text-center font-medium text-purple-600 dark:text-purple-400 shadow-lg"
                 >
-                  Buy Premium Plan • 19.99 USDC
+                  Try Now
                 </motion.div>
               </div>
             </div>

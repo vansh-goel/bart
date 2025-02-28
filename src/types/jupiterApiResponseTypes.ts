@@ -19,7 +19,6 @@ export interface QuoteResponse {
   otherAmountThreshold: string;
   swapMode: string;
   slippageBps: number;
-  platformFee: any;
   priceImpactPct: string;
   routePlan: Array<{
     swapInfo: {
@@ -34,7 +33,6 @@ export interface QuoteResponse {
     };
     percent: number;
   }>;
-  scoreReport: any;
   contextSlot: number;
   timeTaken: number;
   swapUsdValue: string;

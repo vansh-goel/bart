@@ -163,8 +163,11 @@ export default function PaymentPage() {
           "https://tokens.jup.ag/tokens?tags=verified"
         );
         const data = await response.json();
-        setTokens(data);
-        setFilteredTokens(data.slice(0, 50));
+        const filteredData = data.filter(
+          (token: Token) => token.symbol !== "USDC"
+        );
+        setTokens(filteredData);
+        setFilteredTokens(filteredData.slice(0, 50));
 
         if (itemData?.tokenMint) {
           const itemToken = data.find(
@@ -174,7 +177,7 @@ export default function PaymentPage() {
             setSelectedToken(itemToken);
           } else {
             const defaultToken = data.find(
-              (token: Token) => token.symbol === "USDC"
+              (token: Token) => token.symbol === "SOL"
             );
             if (defaultToken) {
               setSelectedToken(defaultToken);
@@ -182,7 +185,7 @@ export default function PaymentPage() {
           }
         } else {
           const defaultToken = data.find(
-            (token: Token) => token.symbol === "USDC"
+            (token: Token) => token.symbol === "SOL"
           );
           if (defaultToken) {
             setSelectedToken(defaultToken);

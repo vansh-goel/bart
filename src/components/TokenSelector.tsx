@@ -46,12 +46,15 @@ export const TokenSelector: React.FC<TokenSelectorProps> = ({
 
   React.useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredTokens(tokens.slice(0, 50));
+      setFilteredTokens(
+        tokens.slice(0, 50).filter((token) => token.symbol !== "USDC")
+      );
     } else {
       const filtered = tokens.filter(
         (token) =>
-          token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+          (token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            token.symbol.toLowerCase().includes(searchQuery.toLowerCase())) &&
+          token.symbol !== "USDC"
       );
       setFilteredTokens(filtered.slice(0, 50));
     }

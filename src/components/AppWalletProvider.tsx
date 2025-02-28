@@ -20,7 +20,7 @@ export default function AppWalletProvider({
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint="https://api.devnet.solana.com">
       <WalletProvider wallets={[]} autoConnect>
         <WalletModalProvider>
           <UserProvider>{children}</UserProvider>

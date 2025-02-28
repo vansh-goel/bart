@@ -9,8 +9,8 @@ import axios from "axios";
 const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 
 const RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solana.com",
-  "https://solana-mainnet.rpc.extrnode.com",
+  "https://api.devnet.solana.com",
+  "https://solana-devnet.rpc.extrnode.com",
   "https://rpc.ankr.com/solana",
   "https://solana-api.projectserum.com",
 ];
@@ -48,21 +48,14 @@ async function getWorkingConnection() {
  * @param {number} params.slippageBps - Slippage tolerance in basis points (e.g. 50 = 0.5%)
  * @returns {Promise<{signature: string, status: string}>} Transaction result
  */
-export async function swapAndPay({
+export async function swapAndPay(
   connection,
   inputMint,
   amount,
   recipientWallet,
   wallet,
-  slippageBps = 50,
-}: {
-  connection: Connection;
-  inputMint: PublicKey;
-  amount: number;
-  recipientWallet: PublicKey;
-  wallet: any;
-  slippageBps?: number;
-}) {
+  slippageBps = 50)
+   {
   try {
     // Get a working connection if not provided or if the provided one fails
     let workingConnection = connection;
@@ -201,12 +194,6 @@ async function fetchQuote({
   amount,
   slippageBps,
   swapMode,
-}: {
-  inputMint: string;
-  outputMint: string;
-  amount: string;
-  slippageBps: number;
-  swapMode: string;
 }) {
   try {
     const response = await axios.get(`https://quote-api.jup.ag/v6/quote`, {
