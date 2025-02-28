@@ -19,6 +19,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useUserContext } from "@/context/UserContext";
 import dynamic from "next/dynamic";
+import { toast } from "react-toastify";
 
 const WalletMultiButtonDynamic = dynamic(
   async () =>
@@ -79,9 +80,18 @@ function LandingPage() {
         });
         handleCloseModal();
         router.push("/dashboard");
+        toast.success("Successfully signed in!");
       }
     } catch (error) {
-      console.error("Error during submission:" + error);
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status) {
+          toast.error(error.response.data.message);
+        } else {
+          toast.error("Error during submission: " + error.message);
+        }
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
     }
   };
 

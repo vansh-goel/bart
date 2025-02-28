@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = decodeUserKey(key);
+    console.log("Decoded User data: " + result);
 
     if (result) {
       return NextResponse.json(result, { status: 200 });

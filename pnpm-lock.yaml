@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@bart/react':
+        specifier: file:../react/bart-react-1.0.0.tgz
+        version: file:../react/bart-react-1.0.0.tgz(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@radix-ui/react-dialog':
         specifier: ^1.1.6
         version: 1.1.6(@types/react-dom@19.0.4(@types/react@19.0.10))(@types/react@19.0.10)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -789,6 +792,13 @@ packages:
   '@babel/types@7.26.9':
     resolution: {integrity: sha512-Y3IR1cRnOxOCDvMmNiym7XpXQ93iGDDPHx+Zj+NM+rg0fBaShfQLkg+hKPaZCEvg5N/LeCo4+Rj/i3FuJsIQaw==}
     engines: {node: '>=6.9.0'}
+
+  '@bart/react@file:../react/bart-react-1.0.0.tgz':
+    resolution: {integrity: sha512-ZY0/eXY7ZEKp44SiUgMQdCclLtpfEFNsI+C2enmrUg/Si+or8nXt4bZv0KXnNznojGsUNA85o/ZhvuihTN+rsA==, tarball: file:../react/bart-react-1.0.0.tgz}
+    version: 1.0.0
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
 
   '@emnapi/runtime@1.3.1':
     resolution: {integrity: sha512-kEBmG8KyqtxJZv+ygbEim+KCGtIq1fC22Ms3S4ziXmYKm8uyoLX0MHONVKwp+9opg390VaKRNt4a7A9NwmpNhw==}
@@ -7244,6 +7254,11 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
+
+  '@bart/react@file:../react/bart-react-1.0.0.tgz(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
 
   '@emnapi/runtime@1.3.1':
     dependencies:

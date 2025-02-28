@@ -9,6 +9,7 @@ import {
   User,
   LogOut,
   Copy,
+  BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -21,6 +22,7 @@ const Dashboard = () => {
   const router = useRouter();
   const { walletAddress, setWalletAddress, email, setEmail } = useUserContext();
   const [userKey, setUserKey] = useState<string | null>(null);
+  const [showDocs, setShowDocs] = useState(false);
 
   useEffect(() => {
     if (!Cookies.get("userSession")) {
@@ -71,6 +73,57 @@ const Dashboard = () => {
     wallet.disconnect();
     Cookies.remove("userSession");
     router.push("/");
+  }
+
+  function handleCopyCode() {
+    const codeExample = `"use client";
+import React from "react";
+import ProductItem from "@bart/react";
+
+const ProductPage = () => {
+  const walletAddress = "Your_Wallet_Address_Here";
+  const mockItems = [
+    {
+      id: "nft-123",
+      name: "Limited Edition NFT",
+      description: "Exclusive digital collectible from our premium collection",
+      price: 10,
+      image: "/item.png",
+      tokenMint: "FSxJ85FXVsXSr51SeWf9ciJWTcRnqKFSmBgRDeL3KyWw",
+      tokenSymbol: "USDC",
+    },
+    {
+      id: "nft-125",
+      name: "NFT",
+      description: "Exclusive digital collectible from our premium collection",
+      price: 100,
+      image: "/window.svg",
+      tokenMint: "FSxJ85FXVsXSr51SeWf9ciJWTcRnqKFSmBgRDeL3KyWw",
+      tokenSymbol: "USDC",
+    },
+  ];
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="flex flex-wrap gap-4 justify-center">
+        {mockItems.map((item) => (
+          <ProductItem
+            key={item.id}
+            item={item}
+            walletAddress={walletAddress}
+            productId={item.id}
+            userKey="Your_User_Key_Here"
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ProductPage;`;
+
+    navigator.clipboard.writeText(codeExample);
+    toast.success("Code example copied to clipboard!");
   }
 
   const containerVariants = {
@@ -185,6 +238,141 @@ const Dashboard = () => {
               <Wallet className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </motion.div>
           </div>
+        </motion.div>
+
+        {/* Documentation Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6"
+        >
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center"
+              >
+                <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </motion.div>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                Integration Guide
+              </h2>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowDocs(!showDocs)}
+              className="text-sm font-medium px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg"
+            >
+              {showDocs ? "Hide Details" : "Show Details"}
+            </motion.button>
+          </div>
+
+          {showDocs && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
+                    Step 1: Install the package
+                  </h3>
+                  <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg font-mono text-sm overflow-x-auto">
+                    <code>npm install @bart/react</code>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
+                    Step 2: Import and use the ProductItem component
+                  </h3>
+                  <div className="relative bg-gray-100 dark:bg-gray-900 p-3 rounded-lg font-mono text-sm overflow-x-auto">
+                    <pre className="text-gray-800 dark:text-gray-200">
+                      {`"use client";
+import React from "react";
+import ProductItem from "@bart/react";
+
+const ProductPage = () => {
+  const walletAddress = "Your_Wallet_Address_Here";
+  const mockItems = [
+    {
+      id: "nft-123",
+      name: "Limited Edition NFT",
+      description: "Exclusive digital collectible",
+      price: 10,
+      image: "/item.png",
+      tokenMint: "FSxJ85FXVsXSr51SeWf9ciJWTcRnqKFSmBgRDeL3KyWw",
+      tokenSymbol: "USDC",
+    },
+    // More items...
+  ];
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex flex-wrap gap-4 justify-center">
+        {mockItems.map((item) => (
+          <ProductItem
+            key={item.id}
+            item={item}
+            walletAddress={walletAddress}
+            productId={item.id}
+            userKey="Your_User_Key_Here"
+          />
+        ))}
+      </div>
+    </div>
+  );
+};`}
+                    </pre>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleCopyCode}
+                      className="absolute top-2 right-2 p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
+                    ProductItem Props
+                  </h3>
+                  <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
+                    <li>
+                      <span className="font-mono text-purple-600 dark:text-purple-400">
+                        item
+                      </span>
+                      : Product information object (required)
+                    </li>
+                    <li>
+                      <span className="font-mono text-purple-600 dark:text-purple-400">
+                        walletAddress
+                      </span>
+                      : User&apos;s Solana wallet address (required)
+                    </li>
+                    <li>
+                      <span className="font-mono text-purple-600 dark:text-purple-400">
+                        productId
+                      </span>
+                      : Unique identifier for the product (required)
+                    </li>
+                    <li>
+                      <span className="font-mono text-purple-600 dark:text-purple-400">
+                        userKey
+                      </span>
+                      : Your encoded user key from this dashboard (required)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Quick actions */}

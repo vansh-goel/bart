@@ -36,6 +36,7 @@ export default function PaymentPage() {
   );
   const [prices, setPrices] = useState<PricesResponse | null>(null);
   const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const fetchTokenDecimals = async (
     mintAddress: string,
@@ -67,6 +68,11 @@ export default function PaymentPage() {
       return;
     }
 
+    if (!walletAddress) {
+      toast.error("Wallet address is required");
+      return;
+    }
+
     try {
       setIsProcessing(true);
 
@@ -74,7 +80,7 @@ export default function PaymentPage() {
         connection,
         new PublicKey(selectedToken.address),
         amountToSwap,
-        new PublicKey(itemData.sellerWallet),
+        new PublicKey(walletAddress),
         wallet,
         50
       );
@@ -142,6 +148,25 @@ export default function PaymentPage() {
   useEffect(() => {
     setMounted(true);
     const itemParam = searchParams?.get("item");
+    // const walletParam = searchParams?.get("wallet");
+    const userKey = searchParams?.get("userKey");
+
+    if (userKey) {
+      const sendUserKey = async () => {
+        const response = await fetch("/api/decodeUserKey", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ key: userKey }),
+        });
+        const data = await response.json();
+        setWalletAddress(data.walletAddress);
+        console.log(data);
+      };
+      sendUserKey();
+    }
+
     if (itemParam) {
       try {
         const decodedItem = JSON.parse(
@@ -252,7 +277,7 @@ export default function PaymentPage() {
                     {displayItem?.tokenMint.slice(-8)}
                   </div>
                   <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    Seller: {displayItem?.sellerWallet}
+                    Seller: {walletAddress}
                   </div>
                 </div>
               </div>
