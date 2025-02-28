@@ -232,8 +232,8 @@ export default function PaymentPage() {
   const displayItem = itemData;
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-600">
-      <div className="absolute flex justify-between w-full gap-2 items-center top-4 left-4">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-x-hidden">
+      <div className="flex px-4 py-2 justify-between w-full gap-2 items-center top-4 left-4">
         <h2 className="text-2xl font-semibold text-center text-gray-600 dark:text-gray-300">
           Powered by <span className="text-purple-600">Bart</span>
         </h2>
@@ -243,7 +243,7 @@ export default function PaymentPage() {
       </div>
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div>
-          <h1 className="text-3xl font-bold mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-gray-600 dark:from-blue-400 dark:to-purple-400">
+          <h1 className="text-3xl font-bold mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r dark:text-white from-slate-800 to-gray-600 dark:from-blue-400 dark:to-purple-400">
             Complete Your Purchase
           </h1>
         </div>
@@ -253,7 +253,7 @@ export default function PaymentPage() {
           <div>
             <div className="h-fit overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
-                <h2 className="text-xl text-blue-800 dark:text-blue-200 p-2">
+                <h2 className="text-xl text-blue-800 dark:text-white p-2">
                   Item Details
                 </h2>
               </div>
@@ -293,7 +293,7 @@ export default function PaymentPage() {
           <div>
             <div className="h-fit rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
-                <h2 className="text-xl text-blue-800 dark:text-blue-200 p-2">
+                <h2 className="text-xl text-blue-800 dark:text-white p-2">
                   Payment Details
                 </h2>
               </div>

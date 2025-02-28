@@ -240,7 +240,7 @@ function LandingPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
-                          className="mb-2 p-2 border border-black/80 bg-white rounded"
+                          className="mb-2 p-2 border border-black/80  rounded"
                         />
                         <input
                           type="password"
@@ -248,7 +248,7 @@ function LandingPage() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          className="mb-2 p-2 border border-black/80 bg-white rounded"
+                          className="mb-2 p-2 border border-black/80  rounded"
                         />
                         <button
                           type="submit"
@@ -562,7 +562,7 @@ function LandingPage() {
       {/* How It Works Section */}
       <section
         id="how-it-works"
-        className="bg-gray-50 dark:bg-gray-850 py-16 md:py-24 transition-colors duration-300"
+        className="bg-gray-50 dark:bg-black py-16 md:py-24 transition-colors duration-300"
       >
         <div className="container mx-auto px-6">
           <motion.div
@@ -572,7 +572,7 @@ function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold  text-gray-800 dark:text-white mb-4">
               How Bart Works
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -709,7 +709,7 @@ function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="bg-gray-50 dark:bg-gray-850 py-4 md:py-16 transition-colors duration-300">
+      <section className="bg-gray-50 dark:bg-gray-800 py-4 md:py-16 transition-colors duration-300">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

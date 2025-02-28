@@ -10,12 +10,19 @@ import {
   LogOut,
   Copy,
   BookOpen,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useUserContext } from "@/context/UserContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import MakePaymentDialog from "@/components/MakePaymentsDialog";
+import AccountSettingsDialog from "@/components/AccountSettingsDialog";
+import ViewTransactionsDialog from "@/components/ViewTransactionsDialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const Dashboard = () => {
   const wallet = useWallet();
@@ -23,6 +30,13 @@ const Dashboard = () => {
   const { walletAddress, setWalletAddress, email, setEmail } = useUserContext();
   const [userKey, setUserKey] = useState<string | null>(null);
   const [showDocs, setShowDocs] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
+  const [isEditingWebhook, setIsEditingWebhook] = useState(false);
+
+  // State for dialog visibility
+  const [isViewTransactionOpen, setViewTransactionOpen] = useState(false);
+  const [isMakePaymentOpen, setMakePaymentOpen] = useState(false);
+  const [isAccountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!Cookies.get("userSession")) {
@@ -41,6 +55,21 @@ const Dashboard = () => {
       setWalletAddress(storedWalletAddress);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchWebhookUrl = async () => {
+      try {
+        const response = await axios.get(`/api/getWebhook?email=${email}`);
+        setWebhookUrl(response.data.webhookUrl || null);
+      } catch (error) {
+        console.error("Error fetching webhook URL:", error);
+      }
+    };
+
+    if (email) {
+      fetchWebhookUrl();
+    }
+  }, [email]);
 
   useEffect(() => {
     if (email && walletAddress) {
@@ -74,6 +103,25 @@ const Dashboard = () => {
     Cookies.remove("userSession");
     router.push("/");
   }
+
+  const handleWebhookUpdate = async () => {
+    try {
+      const response = await axios.put("/api/updateWebhook", {
+        email,
+        webhookUrl,
+      });
+
+      if (response.status === 200) {
+        toast.success("Webhook URL updated!");
+        setIsEditingWebhook(false);
+      } else {
+        toast.error("Failed to update webhook URL.");
+      }
+    } catch (error) {
+      console.error("Error updating webhook URL:", error);
+      toast.error("Failed to update webhook URL.");
+    }
+  };
 
   function handleCopyCode() {
     const codeExample = `"use client";
@@ -159,6 +207,7 @@ export default ProductPage;`;
             <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
               Connected
             </span>
+            <ThemeToggle />
           </div>
         </motion.div>
 
@@ -237,6 +286,54 @@ export default ProductPage;`;
             >
               <Wallet className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Webhook Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+              Webhook URL
+            </h2>
+            {isEditingWebhook ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleWebhookUpdate}
+                className="text-sm font-medium px-3 py-1.5 bg-green-100 text-green-600 rounded-lg"
+              >
+                <Check className="w-4 h-4" />
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsEditingWebhook(true)}
+                className="text-sm font-medium px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg"
+              >
+                <Pencil className="w-4 h-4" />
+              </motion.button>
+            )}
+          </div>
+          <div className="flex items-center">
+            {isEditingWebhook ? (
+              <input
+                type="text"
+                value={webhookUrl || ""}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="border rounded p-2 flex-grow"
+                placeholder="Enter your webhook URL"
+              />
+            ) : (
+              <p className="text-gray-700 dark:text-gray-300">
+                {webhookUrl ? webhookUrl : "Not Set"}
+              </p>
+            )}
           </div>
         </motion.div>
 
@@ -387,22 +484,26 @@ const ProductPage = () => {
               title: "Make Payment",
               icon: <CreditCard className="w-5 h-5" />,
               color: "bg-blue-500",
+              onClick: () => setMakePaymentOpen(true),
             },
             {
               title: "View Transactions",
               icon: <ArrowRight className="w-5 h-5" />,
               color: "bg-green-500",
+              onClick: () => setViewTransactionOpen(true),
             },
             {
               title: "Account Settings",
               icon: <User className="w-5 h-5" />,
               color: "bg-amber-500",
+              onClick: () => setAccountSettingsOpen(true),
             },
           ].map((item, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={item.onClick} // Handle button click
             >
               <div className="flex items-center gap-4">
                 <div
@@ -417,6 +518,20 @@ const ProductPage = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Dialogs */}
+        <ViewTransactionsDialog
+          isOpen={isViewTransactionOpen}
+          handleClose={() => setViewTransactionOpen(false)}
+        />
+        <MakePaymentDialog
+          isOpen={isMakePaymentOpen}
+          handleClose={() => setMakePaymentOpen(false)}
+        />
+        <AccountSettingsDialog
+          isOpen={isAccountSettingsOpen}
+          handleClose={() => setAccountSettingsOpen(false)}
+        />
 
         {/* Logout button */}
         <motion.div

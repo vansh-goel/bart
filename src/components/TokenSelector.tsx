@@ -62,7 +62,7 @@ export const TokenSelector: React.FC<TokenSelectorProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-3 text-gray-700">
+      <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-white">
         Select Payment Token
       </label>
 
@@ -70,7 +70,7 @@ export const TokenSelector: React.FC<TokenSelectorProps> = ({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-between border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 py-6 bg-white"
+            className="w-full justify-between border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 py-6 bg-white dark:hover:bg-gray-200"
             disabled={isLoading}
           >
             {selectedToken ? (
@@ -86,7 +86,7 @@ export const TokenSelector: React.FC<TokenSelectorProps> = ({
                     }}
                   />
                 </div>
-                <span className="text-base font-medium">
+                <span className="text-base dark:text-black font-medium">
                   {selectedToken.symbol}
                 </span>
               </div>
@@ -134,7 +134,7 @@ export const TokenSelector: React.FC<TokenSelectorProps> = ({
                         y: 0,
                         transition: { delay: index * 0.02 },
                       }}
-                      className="flex items-center p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                      className="flex items-center p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150 dark:bg-gray-200"
                       onClick={() => {
                         setSelectedToken(token);
                         setSearchQuery("");
