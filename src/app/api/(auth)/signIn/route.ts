@@ -3,26 +3,12 @@ import dbConnect from "../../../../lib/mongoDbConnect";
 import User from "../../../../models/User";
 import bcrypt from "bcryptjs";
 
-// CORS middleware
-const allowCors = (req: NextRequest) => {
-  const origin = req.headers.get("origin");
-  if (origin === "https://bart-sooty.vercel.app/") {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Methods": "POST",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  }
-  return null;
+const cors = () => {
+  return NextResponse.next().headers.set("Access-Control-Allow-Origin", "*");
 };
 
 export async function POST(req: NextRequest) {
-  // Handle CORS preflight request
-  const corsResponse = allowCors(req);
-  if (corsResponse) return corsResponse;
+  cors();
 
   try {
     // Parse the JSON body from the request
