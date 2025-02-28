@@ -37,15 +37,21 @@ const Dashboard = () => {
   const [isViewTransactionOpen, setViewTransactionOpen] = useState(false);
   const [isMakePaymentOpen, setMakePaymentOpen] = useState(false);
   const [isAccountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+
     if (!Cookies.get("userSession")) {
       router.push("/");
     }
     if (wallet.publicKey) {
       setWalletAddress(wallet.publicKey?.toString());
     }
-    if (typeof window !== "undefined") {
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
       const storedEmail = localStorage.getItem("email");
       const storedWalletAddress = localStorage.getItem("walletAddress");
 
@@ -55,21 +61,15 @@ const Dashboard = () => {
       if (storedWalletAddress) {
         setWalletAddress(storedWalletAddress);
       }
-      if (storedEmail) {
-        setEmail(storedEmail);
-      }
-      if (storedWalletAddress) {
-        setWalletAddress(storedWalletAddress);
-      }
     }
-  }, []);
+  }, [isClient]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && email && walletAddress) {
+    if (isClient && email && walletAddress) {
       localStorage.setItem("email", email);
       localStorage.setItem("walletAddress", walletAddress);
     }
-  }, [email, walletAddress]);
+  }, [email, walletAddress, isClient]);
 
   useEffect(() => {
     const fetchWebhookUrl = async () => {
