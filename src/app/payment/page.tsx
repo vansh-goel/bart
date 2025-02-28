@@ -70,17 +70,14 @@ export default function PaymentPage() {
     try {
       setIsProcessing(true);
 
-      const recipientWallet = new PublicKey(itemData.sellerWallet);
-
-      const result = await swapAndPay({
+      const result = await swapAndPay(
         connection,
-        inputMint: new PublicKey(selectedToken.address),
-        amount: amountToSwap,
-        recipientWallet,
-        wallet: wallet,
-        slippageBps: 50,
-      });
-
+        new PublicKey(selectedToken.address),
+        amountToSwap,
+        new PublicKey(itemData.sellerWallet),
+        wallet,
+        50
+      );
       toast.success(`Payment successful! Transaction: ${result.signature}`);
     } catch (error) {
       console.error("Payment failed:", error);
