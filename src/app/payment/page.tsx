@@ -14,6 +14,7 @@ import {
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Loader } from "lucide-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -148,8 +149,9 @@ export default function PaymentPage() {
   useEffect(() => {
     setMounted(true);
     const itemParam = searchParams?.get("item");
-    // const walletParam = searchParams?.get("wallet");
+    const walletParam = searchParams?.get("wallet");
     const userKey = searchParams?.get("userKey");
+    setWalletAddress(walletParam);
 
     if (userKey) {
       const sendUserKey = async () => {
@@ -231,10 +233,13 @@ export default function PaymentPage() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-600">
-      <div className="absolute flex gap-2 items-center top-4 left-4">
+      <div className="absolute flex justify-between w-full gap-2 items-center top-4 left-4">
         <h2 className="text-2xl font-semibold text-center text-gray-600 dark:text-gray-300">
           Powered by <span className="text-purple-600">Bart</span>
         </h2>
+        <div className="px-6">
+          <WalletMultiButton />
+        </div>
       </div>
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div>
