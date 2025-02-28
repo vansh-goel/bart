@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "../../../../lib/mongoDbConnect";
-import User from "../../../../models/User";
+import dbConnect from "../../../lib/mongoDbConnect";
+import User from "../../../models/User";
 import bcrypt from "bcryptjs";
 
 export async function OPTIONS() {

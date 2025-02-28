@@ -64,7 +64,7 @@ function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const endpoint = isSignUp ? "/api/signUp" : "/api/signIn";
+    const endpoint = isSignUp ? "/api/sign-up" : "/api/sign-in";
 
     try {
       const response = await axios.post(endpoint, {
