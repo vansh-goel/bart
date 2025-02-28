@@ -38,6 +38,7 @@ export default function PaymentPage() {
   const [prices, setPrices] = useState<PricesResponse | null>(null);
   const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [productId, setProductId] = useState<string | null>("");
 
   const fetchTokenDecimals = async (
     mintAddress: string,
@@ -86,6 +87,17 @@ export default function PaymentPage() {
         50
       );
       toast.success(`Payment successful! Transaction: ${result.signature}`);
+      const payer = wallet.publicKey;
+      const userKey = searchParams?.get("userKey");
+      if (userKey) {
+        await fetch("/api/successfulTransaction", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userKey, amountToSwap, payer, productId }),
+        });
+      }
     } catch (error) {
       console.error("Payment failed:", error);
       toast.error(`Payment failed`);
@@ -149,9 +161,11 @@ export default function PaymentPage() {
   useEffect(() => {
     setMounted(true);
     const itemParam = searchParams?.get("item");
+    const product = searchParams?.get("productId");
     const walletParam = searchParams?.get("wallet");
     const userKey = searchParams?.get("userKey");
     setWalletAddress(walletParam);
+    setProductId(product);
 
     if (userKey) {
       const sendUserKey = async () => {
