@@ -78,7 +78,7 @@ const Dashboard = () => {
   function handleCopyCode() {
     const codeExample = `"use client";
 import React from "react";
-import ProductItem from "@bart/react";
+import ProductItem from "@bart-payment/react";
 
 const ProductPage = () => {
   const walletAddress = "Your_Wallet_Address_Here";
@@ -282,7 +282,7 @@ export default ProductPage;`;
                     Step 1: Install the package
                   </h3>
                   <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg font-mono text-sm overflow-x-auto">
-                    <code>npm install @bart/react</code>
+                    <code>npm install @bart-payment/react</code>
                   </div>
                 </div>
 
@@ -294,7 +294,7 @@ export default ProductPage;`;
                     <pre className="text-gray-800 dark:text-gray-200">
                       {`"use client";
 import React from "react";
-import ProductItem from "@bart/react";
+import ProductItem from "@bart-payment/react";
 
 const ProductPage = () => {
   const walletAddress = "Your_Wallet_Address_Here";

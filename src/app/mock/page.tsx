@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import ProductItem from "@/components/ProductItem";
+import ProductItem from "@bart-payment/react";
 
 const ProductPage = () => {
   const walletAddress = "zeusLrvFFpcPMKCe4BLrnmMMdxSUkJV4pNd8kNxgqVW";
