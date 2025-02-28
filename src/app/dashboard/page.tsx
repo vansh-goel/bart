@@ -23,6 +23,7 @@ import MakePaymentDialog from "@/components/MakePaymentsDialog";
 import AccountSettingsDialog from "@/components/AccountSettingsDialog";
 import ViewTransactionsDialog from "@/components/ViewTransactionsDialog";
 import { ThemeToggle } from "@/components/theme-toggle";
+import dynamic from "next/dynamic";
 
 const Dashboard = () => {
   const wallet = useWallet();
@@ -573,4 +574,14 @@ const ProductPage = () => {
   );
 };
 
-export default Dashboard;
+const DynamicDashborad = dynamic(() => Promise.resolve(Dashboard), {
+  ssr: false,
+});
+
+export default function DashboardPage() {
+  return (
+    <div>
+      <DynamicDashborad />
+    </div>
+  );
+}

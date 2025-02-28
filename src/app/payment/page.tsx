@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { TokenSelector } from "@/components/TokenSelector";
 import { Connection, PublicKey } from "@solana/web3.js";
@@ -16,7 +16,8 @@ import { toast } from "react-toastify";
 import { Loader } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
-export default function PaymentPage() {
+// Create a client component that uses search params
+function PaymentContent() {
   const searchParams = useSearchParams();
   const wallet = useWallet();
   const connection = new Connection(
@@ -160,59 +161,71 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setMounted(true);
-    const itemParam = searchParams?.get("item");
-    const product = searchParams?.get("productId");
-    const walletParam = searchParams?.get("wallet");
-    const userKey = searchParams?.get("userKey");
-    setWalletAddress(walletParam);
-    setProductId(product);
 
-    if (userKey) {
-      const sendUserKey = async () => {
-        const response = await fetch("/api/decodeUserKey", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ key: userKey }),
-        });
-        const data = await response.json();
-        setWalletAddress(data.walletAddress);
-        console.log(data);
-      };
-      sendUserKey();
-    }
+    // Read parameters safely
+    try {
+      const itemParam = searchParams?.get("item");
+      const product = searchParams?.get("productId");
+      const walletParam = searchParams?.get("wallet");
+      const userKey = searchParams?.get("userKey");
 
-    if (itemParam) {
-      try {
-        const decodedItem = JSON.parse(
-          decodeURIComponent(itemParam)
-        ) as ItemData;
-        setItemData(decodedItem);
-      } catch (error) {
-        console.error("Error parsing item data:", error);
+      setWalletAddress(walletParam);
+      setProductId(product);
+
+      if (userKey) {
+        const sendUserKey = async () => {
+          const response = await fetch("/api/decodeUserKey", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ key: userKey }),
+          });
+          const data = await response.json();
+          setWalletAddress(data.walletAddress);
+          console.log(data);
+        };
+        sendUserKey();
       }
-    }
 
-    const fetchTokens = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          "https://tokens.jup.ag/tokens?tags=verified"
-        );
-        const data = await response.json();
-        const filteredData = data.filter(
-          (token: Token) => token.symbol !== "USDC"
-        );
-        setTokens(filteredData);
-        setFilteredTokens(filteredData.slice(0, 50));
+      if (itemParam) {
+        try {
+          const decodedItem = JSON.parse(
+            decodeURIComponent(itemParam)
+          ) as ItemData;
+          setItemData(decodedItem);
+        } catch (error) {
+          console.error("Error parsing item data:", error);
+        }
+      }
 
-        if (itemData?.tokenMint) {
-          const itemToken = data.find(
-            (token: Token) => token.address === itemData.tokenMint
+      const fetchTokens = async () => {
+        try {
+          setIsLoading(true);
+          const response = await fetch(
+            "https://tokens.jup.ag/tokens?tags=verified"
           );
-          if (itemToken) {
-            setSelectedToken(itemToken);
+          const data = await response.json();
+          const filteredData = data.filter(
+            (token: Token) => token.symbol !== "USDC"
+          );
+          setTokens(filteredData);
+          setFilteredTokens(filteredData.slice(0, 50));
+
+          if (itemData?.tokenMint) {
+            const itemToken = data.find(
+              (token: Token) => token.address === itemData.tokenMint
+            );
+            if (itemToken) {
+              setSelectedToken(itemToken);
+            } else {
+              const defaultToken = data.find(
+                (token: Token) => token.symbol === "SOL"
+              );
+              if (defaultToken) {
+                setSelectedToken(defaultToken);
+              }
+            }
           } else {
             const defaultToken = data.find(
               (token: Token) => token.symbol === "SOL"
@@ -221,22 +234,17 @@ export default function PaymentPage() {
               setSelectedToken(defaultToken);
             }
           }
-        } else {
-          const defaultToken = data.find(
-            (token: Token) => token.symbol === "SOL"
-          );
-          if (defaultToken) {
-            setSelectedToken(defaultToken);
-          }
+        } catch (error) {
+          console.error("Error fetching tokens:", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching tokens:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      };
 
-    fetchTokens();
+      fetchTokens();
+    } catch (error) {
+      console.error("Error in search params processing:", error);
+    }
   }, [searchParams, itemData?.tokenMint]);
 
   if (!mounted) {
@@ -292,8 +300,8 @@ export default function PaymentPage() {
                     Price: {displayItem?.price} {displayItem?.tokenSymbol}
                   </div>
                   <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    Token Mint: {displayItem?.tokenMint.slice(0, 8)}...
-                    {displayItem?.tokenMint.slice(-8)}
+                    Token Mint: {displayItem?.tokenMint?.slice(0, 8)}...
+                    {displayItem?.tokenMint?.slice(-8)}
                   </div>
                   <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                     Seller: {walletAddress}
@@ -343,5 +351,26 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Fallback component for Suspense
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center">
+        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="mt-4 text-gray-600">Loading payment details...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PaymentContent />
+    </Suspense>
   );
 }
