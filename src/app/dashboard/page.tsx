@@ -45,16 +45,31 @@ const Dashboard = () => {
     if (wallet.publicKey) {
       setWalletAddress(wallet.publicKey?.toString());
     }
-    const storedEmail = localStorage.getItem("email");
-    const storedWalletAddress = localStorage.getItem("walletAddress");
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("email");
+      const storedWalletAddress = localStorage.getItem("walletAddress");
 
-    if (storedEmail) {
-      setEmail(storedEmail);
-    }
-    if (storedWalletAddress) {
-      setWalletAddress(storedWalletAddress);
+      if (storedEmail) {
+        setEmail(storedEmail);
+      }
+      if (storedWalletAddress) {
+        setWalletAddress(storedWalletAddress);
+      }
+      if (storedEmail) {
+        setEmail(storedEmail);
+      }
+      if (storedWalletAddress) {
+        setWalletAddress(storedWalletAddress);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && email && walletAddress) {
+      localStorage.setItem("email", email);
+      localStorage.setItem("walletAddress", walletAddress);
+    }
+  }, [email, walletAddress]);
 
   useEffect(() => {
     const fetchWebhookUrl = async () => {
@@ -72,10 +87,6 @@ const Dashboard = () => {
   }, [email]);
 
   useEffect(() => {
-    if (email && walletAddress) {
-      localStorage.setItem("email", email);
-      localStorage.setItem("walletAddress", walletAddress);
-    }
     const fetchUserKey = async () => {
       if (email && walletAddress) {
         const response = await fetch("/api/createUserKey", {
