@@ -29,9 +29,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppWalletProvider>
-          <ThemeProvider>{children}</ThemeProvider>
-        </AppWalletProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AppWalletProvider>{children}</AppWalletProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
