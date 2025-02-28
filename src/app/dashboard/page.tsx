@@ -51,7 +51,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
+    if (isClient && window !== undefined) {
       const storedEmail = localStorage.getItem("email");
       const storedWalletAddress = localStorage.getItem("walletAddress");
 
@@ -65,7 +65,7 @@ const Dashboard = () => {
   }, [isClient]);
 
   useEffect(() => {
-    if (isClient && email && walletAddress) {
+    if (isClient && email && walletAddress && window !== undefined) {
       localStorage.setItem("email", email);
       localStorage.setItem("walletAddress", walletAddress);
     }
