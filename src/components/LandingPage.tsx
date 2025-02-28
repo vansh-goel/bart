@@ -97,7 +97,7 @@ function LandingPage() {
 
   if (!mounted) return null;
   return (
-    <div className="min-h-screen bg-white transition-colors duration-300">
+    <div className="min-h-screen dark:bg-black bg-white transition-colors duration-300">
       {/* Navigation */}
       <nav className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
