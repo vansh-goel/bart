@@ -276,6 +276,9 @@ function LandingPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 className="px-8 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg shadow-lg dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-colors duration-300"
+                onClick={() =>
+                  window.open("https://youtu.be/OuaHcOY5F1c", "_blank")
+                }
               >
                 View Demo
               </motion.button>
@@ -302,25 +305,25 @@ function LandingPage() {
                       <span className="text-purple-600 dark:text-purple-400">
                         import
                       </span>{" "}
-                      {"{"} Lorem ipsum {"}"}{" "}
+                      {"{"} ProductItem {"}"}{" "}
                       <span className="text-purple-600 dark:text-purple-400">
                         from
                       </span>{" "}
                       <span className="text-green-600 dark:text-green-400">
-                        &apos;@lorem/ipsum&apos;
+                        &apos;@bart-payments/react&apos;
                       </span>
                       ;
                     </div>
-                    <div className="mb-1">{"<BartPayment"}</div>
-                    <div className="mb-1">&nbsp;&nbsp;amount={"{19.99}"}</div>
+                    <div className="mb-1">{"<ProductItem"}</div>
+                    <div className="mb-1">&nbsp;&nbsp;item={"userItem"}</div>
                     <div className="mb-1">
-                      &nbsp;&nbsp;recipientAddress={"{merchantAddress}"}
+                      &nbsp;&nbsp;walletAddress={"{merchantAddress}"}
                     </div>
                     <div className="mb-1">
-                      &nbsp;&nbsp;onSuccess={"{handleSuccess}"}
+                      &nbsp;&nbsp;productId={"productId"}
                     </div>
                     <div className="mb-1">
-                      &nbsp;&nbsp;label=&quot;PlaceHolder&quot;
+                      &nbsp;&nbsp;userKey=&quot;userkey&quot;
                     </div>
                     <div>{"/>  // That's it!"}</div>
                   </div>
