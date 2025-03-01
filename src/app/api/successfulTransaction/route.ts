@@ -1,3 +1,4 @@
+// src/app/api/successfulTransaction/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { decodeUserKey } from "../../../utils/hashUtils";
 import { sendEmail } from "../../../utils/emailService";
@@ -6,9 +7,9 @@ import User from "../../../models/User";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userKey, amountToSwap, payer, productId } = await req.json();
+    const { userKey, price, payer, productId } = await req.json();
 
-    if (!userKey || !amountToSwap || !payer || !productId) {
+    if (!userKey || !price || !payer || !productId) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     // Decode the user key to get the user's email
     const decodedResult = decodeUserKey(userKey);
-    console.log("Decoded User data: ", decodedResult);
+    console.log("Decoded User data: ", JSON.stringify(decodedResult, null, 2));
 
     if (!decodedResult || !decodedResult.email) {
       return NextResponse.json(
@@ -30,8 +31,17 @@ export async function POST(req: NextRequest) {
 
     // Send an email to the user
     await sendEmail(email, {
-      subject: "Payment Recieved",
-      body: `Your recieved a payment of ${amountToSwap}. Payer: ${payer}, Product ID: ${productId}.`,
+      subject: "Payment Received",
+      html: `
+        <h1>Payment Received</h1>
+        <p>You have received a payment with the following details:</p>
+        <ul>
+          <li><strong>Amount:</strong> ${price} USDC</li>
+          <li><strong>Payer:</strong> ${payer}</li>
+          <li><strong>Product ID:</strong> ${productId}</li>
+        </ul>
+        <p>Thank you for your business!</p>
+      `,
     });
 
     // Connect to the database
@@ -56,7 +66,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amountToSwap, payer, productId }),
+      body: JSON.stringify({ price, payer, productId }),
     });
 
     if (!response.ok) {

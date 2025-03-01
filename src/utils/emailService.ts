@@ -1,28 +1,25 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  auth: {
-    user: `${process.env.ETHEREAL_USERNAME}`,
-    pass: `${process.env.ETHEREAL_PASSWORD}`,
-  },
-});
+const resend = new Resend(`${process.env.RESEND}`);
 
 export const sendEmail = async (
   to: string,
-  { subject, body }: { subject: string; body: string }
+  { subject, html }: { subject: string; html: string }
 ) => {
-  const mailOptions = {
-    from: `${process.env.ETHEREAL_USERNAME}`,
-    to,
-    subject,
-    text: body,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    const response = await resend.emails.send({
+      from: `${process.env.RESEND_DOMAIN}`,
+      to: [to],
+      subject,
+      html,
+    });
+
+    // Check if response and data are present
+    if (response && response.data) {
+      console.log("Email sent successfully", response.data);
+    } else {
+      console.warn("Email sent, but no data returned:", response);
+    }
   } catch (error) {
     console.error("Error sending email:", error);
   }

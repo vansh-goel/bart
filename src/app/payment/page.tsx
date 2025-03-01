@@ -13,7 +13,14 @@ import {
 } from "@/types/jupiterApiResponseTypes";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { Loader } from "lucide-react";
+import {
+  Loader,
+  Shield,
+  CreditCard,
+  Check,
+  ChevronLeft,
+  ArrowLeft,
+} from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 // Create a client component that uses search params
@@ -40,6 +47,12 @@ function PaymentContent() {
   const [amountToSwap, setAmountToSwap] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [productId, setProductId] = useState<string | null>("");
+  const [paymentStep, setPaymentStep] = useState<
+    "select" | "confirm" | "success"
+  >("select");
+  const [redirectCountdown, setRedirectCountdown] = useState<number>(5);
+  const [transactionSignature, setTransactionSignature] = useState<string>("");
+  const [referrer, setReferrer] = useState<string>("");
 
   const fetchTokenDecimals = async (
     mintAddress: string,
@@ -87,7 +100,14 @@ function PaymentContent() {
         wallet,
         50
       );
+
+      // Store transaction signature
+      setTransactionSignature(result.signature);
+
+      // Set success state
+      setPaymentStep("success");
       toast.success(`Payment successful! Transaction: ${result.signature}`);
+
       const payer = wallet.publicKey;
       const userKey = searchParams?.get("userKey");
       if (userKey) {
@@ -96,9 +116,38 @@ function PaymentContent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userKey, amountToSwap, payer, productId }),
+          body: JSON.stringify({
+            userKey,
+            price: itemData?.price,
+            payer,
+            productId,
+          }),
         });
       }
+
+      // Initialize countdown for redirect
+      let countdownValue = 5;
+      setRedirectCountdown(countdownValue);
+
+      // Start countdown and redirect
+      const countdownInterval = setInterval(() => {
+        countdownValue -= 1;
+        setRedirectCountdown(countdownValue);
+
+        if (countdownValue <= 0) {
+          clearInterval(countdownInterval);
+          // Redirect back to referring page
+          if (referrer) {
+            window.location.href = referrer;
+          } else {
+            // Fallback if no referrer
+            window.history.back();
+          }
+        }
+      }, 1000);
+
+      // Cleanup interval on component unmount or when payment step changes
+      return () => clearInterval(countdownInterval);
     } catch (error) {
       console.error("Payment failed:", error);
       toast.error(`Payment failed`);
@@ -162,12 +211,23 @@ function PaymentContent() {
   useEffect(() => {
     setMounted(true);
 
+    // Store referrer for later redirect
+    if (document.referrer) {
+      setReferrer(document.referrer);
+    }
+
     // Read parameters safely
     try {
       const itemParam = searchParams?.get("item");
       const product = searchParams?.get("productId");
       const walletParam = searchParams?.get("wallet");
       const userKey = searchParams?.get("userKey");
+      const referrerParam = searchParams?.get("referrer");
+
+      // Priority: 1. referrer param, 2. document.referrer
+      if (referrerParam) {
+        setReferrer(referrerParam);
+      }
 
       setWalletAddress(walletParam);
       setProductId(product);
@@ -253,103 +313,396 @@ function PaymentContent() {
 
   const displayItem = itemData;
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-x-hidden">
-      <div className="flex px-4 py-2 justify-between w-full gap-2 items-center top-4 left-4">
-        <h2 className="text-2xl font-semibold text-center text-gray-600 dark:text-gray-300">
-          Powered by <span className="text-purple-600">Bart</span>
-        </h2>
-        <div className="px-6">
-          <WalletMultiButton />
+  const formatAddress = (address: string | null) => {
+    if (!address) return "";
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const renderSuccessScreen = () => (
+    <div className="flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-16 h-16 mb-6 rounded-full bg-green-100 flex items-center justify-center">
+        <Check className="h-8 w-8 text-green-600" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+        Payment Successful!
+      </h2>
+      <p className="text-gray-600 dark:text-gray-300 mb-6">
+        Your transaction has been completed successfully.
+      </p>
+      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-md mb-6">
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-500 dark:text-gray-400">Item:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {displayItem?.name}
+          </span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-500 dark:text-gray-400">Amount:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {displayItem?.price} {displayItem?.tokenSymbol}
+          </span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-500 dark:text-gray-400">Paid with:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {selectedToken?.symbol}
+          </span>
+        </div>
+        {transactionSignature && (
+          <div className="flex justify-between">
+            <span className="text-gray-500 dark:text-gray-400">
+              Transaction:
+            </span>
+            <span className="font-medium text-gray-900 dark:text-white">
+              {formatAddress(transactionSignature)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mr-3 text-purple-600 dark:text-purple-300 font-semibold">
+          {redirectCountdown}
+        </div>
+        <p className="text-gray-600 dark:text-gray-300">
+          Redirecting in {redirectCountdown} second
+          {redirectCountdown !== 1 ? "s" : ""}...
+        </p>
+      </div>
+
+      <button
+        onClick={() => {
+          if (referrer) {
+            window.location.href = referrer;
+          } else {
+            window.history.back();
+          }
+        }}
+        className="mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Return Now
+      </button>
+    </div>
+  );
+
+  const renderConfirmScreen = () => (
+    <div className="p-6">
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => setPaymentStep("select")}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+        </button>
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white ml-2">
+          Confirm Payment
+        </h3>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6">
+        <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-gray-600 dark:text-gray-400">Item:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {displayItem?.name}
+          </span>
+        </div>
+        <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-gray-600 dark:text-gray-400">Price:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {displayItem?.price} {displayItem?.tokenSymbol}
+          </span>
+        </div>
+        <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-gray-600 dark:text-gray-400">Pay with:</span>
+          <div className="flex items-center">
+            <img
+              src={selectedToken?.logoURI}
+              alt={selectedToken?.symbol}
+              className="w-5 h-5 mr-2"
+            />
+            <span className="font-medium text-gray-900 dark:text-white">
+              {selectedToken?.symbol}
+            </span>
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600 dark:text-gray-400">Recipient:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {formatAddress(walletAddress)}
+          </span>
         </div>
       </div>
-      <div className="container mx-auto py-12 px-4 max-w-6xl">
-        <div>
-          <h1 className="text-3xl font-bold mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r dark:text-white from-slate-800 to-gray-600 dark:from-blue-400 dark:to-purple-400">
-            Complete Your Purchase
-          </h1>
+
+      <div className="mb-6">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
+            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-900 dark:text-white">
+              Secure Payment
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Your transaction is protected by blockchain technology
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={handlePayment}
+        disabled={isProcessing}
+        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all text-white duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        {isProcessing ? (
+          <div className="flex items-center">
+            <Loader className="h-5 w-5 animate-spin mr-2" />
+            Processing Payment...
+          </div>
+        ) : (
+          <>
+            <CreditCard className="h-5 w-5 mr-2" />
+            Confirm Payment
+          </>
+        )}
+      </button>
+    </div>
+  );
+
+  const renderSelectScreen = () => (
+    <div className="p-6">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        Select Payment Method
+      </h3>
+      <TokenSelector
+        tokens={tokens}
+        filteredTokens={filteredTokens}
+        setFilteredTokens={setFilteredTokens}
+        selectedToken={selectedToken}
+        setSelectedToken={setSelectedToken}
+        isLoading={isLoading}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
+      <div className="mt-6 mb-4">
+        <div className="flex items-center mb-3">
+          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3">
+            <Shield className="h-4 w-4 text-green-600 dark:text-green-300" />
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Your transaction is secure and encrypted
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={() => setPaymentStep("confirm")}
+        disabled={!selectedToken || isLoading}
+        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all text-white duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+      >
+        Continue to Review
+      </button>
+    </div>
+  );
+
+  const renderPaymentStep = () => {
+    switch (paymentStep) {
+      case "success":
+        return renderSuccessScreen();
+      case "confirm":
+        return renderConfirmScreen();
+      case "select":
+      default:
+        return renderSelectScreen();
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-x-hidden">
+      {/* Header with progress indicator */}
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-purple-600 font-bold">Bart</span> Payment
+            </h2>
+          </div>
+          {paymentStep !== "success" && <WalletMultiButton />}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {/* Item details */}
-          <div>
-            <div className="h-fit overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
-                <h2 className="text-xl text-blue-800 dark:text-white p-2">
-                  Item Details
-                </h2>
+        {/* Progress steps - hide on success */}
+        {paymentStep !== "success" && (
+          <div className="container mx-auto px-4 pb-4">
+            <div className="flex items-center">
+              {/* Step 1 */}
+              <div
+                className={`w-8 h-8 rounded-full ${
+                  paymentStep === "select" || paymentStep === "confirm"
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 text-gray-600 dark:bg-gray-700"
+                } flex items-center justify-center text-sm font-medium`}
+              >
+                1
               </div>
-              <div className="p-4">
-                <div className="flex flex-col items-center mb-4">
-                  <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md">
-                    {displayItem ? (
-                      <img
-                        src={displayItem?.image}
-                        alt={displayItem?.name}
-                        className="w-full max-w-xs mx-auto object-cover"
-                      />
-                    ) : null}
-                  </div>
-                  <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                    {displayItem?.name}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-300 mt-3 text-center">
-                    {displayItem?.description}
-                  </p>
-                  <div className="mt-6 text-lg font-medium px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 shadow-sm">
-                    Price: {displayItem?.price} {displayItem?.tokenSymbol}
-                  </div>
-                  <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    Token Mint: {displayItem?.tokenMint?.slice(0, 8)}...
-                    {displayItem?.tokenMint?.slice(-8)}
-                  </div>
-                  <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    Seller: {walletAddress}
-                  </div>
-                </div>
+
+              {/* Line between steps 1 and 2 */}
+              <div
+                className={`flex-1 h-1 mx-2 ${
+                  paymentStep === "select" || paymentStep === "confirm"
+                    ? "bg-purple-600"
+                    : "bg-gray-200 dark:bg-gray-700"
+                }`}
+              ></div>
+
+              {/* Step 2 */}
+              <div
+                className={`w-8 h-8 rounded-full ${
+                  paymentStep === "confirm"
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 text-gray-600 dark:bg-gray-700"
+                } flex items-center justify-center text-sm font-medium`}
+              >
+                2
+              </div>
+
+              {/* Line between steps 2 and 3 */}
+              <div className="flex-1 h-1 mx-2 bg-gray-200 dark:bg-gray-700"></div>
+
+              {/* Step 3 */}
+              <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 flex items-center justify-center text-sm font-medium">
+                3
               </div>
             </div>
           </div>
+        )}
+      </header>
 
-          {/*  Payment options */}
-          <div>
-            <div className="h-fit rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 pb-4">
-                <h2 className="text-xl text-blue-800 dark:text-white p-2">
-                  Payment Details
+      <main className="container mx-auto py-8 px-4 max-w-6xl flex-grow">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {/* Item details card */}
+          <div className="md:col-span-2">
+            <div className="h-fit overflow-hidden rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <div className="bg-gradient-to-r from-purple-500 to-indigo-600 py-4 px-6">
+                <h2 className="text-xl font-semibold text-white">
+                  Order Summary
                 </h2>
               </div>
               <div className="p-6">
-                <TokenSelector
-                  tokens={tokens}
-                  filteredTokens={filteredTokens}
-                  setFilteredTokens={setFilteredTokens}
-                  selectedToken={selectedToken}
-                  setSelectedToken={setSelectedToken}
-                  isLoading={isLoading}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                />
-                <div className="pt-4">
-                  <button
-                    onClick={handlePayment}
-                    className="w-full max-h-6 p-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all grid place-content-center text-white duration-300"
-                  >
-                    {isProcessing ? (
-                      <div className="flex gap-2 items-center">
-                        Processing
-                        <Loader className="h-4 w-4 animate-spin" />
+                {displayItem ? (
+                  <div className="flex flex-col items-center">
+                    <div className="w-full mb-6 rounded-xl overflow-hidden shadow-md bg-gray-50 dark:bg-gray-700 p-2">
+                      <img
+                        src={displayItem?.image}
+                        alt={displayItem?.name}
+                        className="w-full object-cover rounded-lg"
+                      />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                      {displayItem?.name}
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+                      {displayItem?.description}
+                    </p>
+                    <div className="w-full">
+                      <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Price:
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {displayItem?.price} {displayItem?.tokenSymbol}
+                        </span>
                       </div>
-                    ) : (
-                      "Proceed to Payment"
-                    )}
-                  </button>
-                </div>
+                      <div className="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Token:
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {formatAddress(displayItem?.tokenMint)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-3">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Seller:
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {formatAddress(walletAddress)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader className="h-8 w-8 animate-spin text-purple-600" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Payment panel */}
+          <div className="md:col-span-3">
+            <div className="h-fit rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+              {renderPaymentStep()}
+            </div>
+
+            {/* Trust indicators - hide on success */}
+            {paymentStep !== "success" && (
+              <div className="mt-6 grid grid-cols-3 gap-4">
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
+                  <Shield className="h-6 w-6 text-green-600 mb-2" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Secure Payments
+                  </span>
+                </div>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-blue-600 mb-2"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Transaction Protection
+                  </span>
+                </div>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-purple-600 mb-2"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                  </svg>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Verified Seller
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
+
+      <footer className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="container mx-auto">
+          <p>
+            © {new Date().getFullYear()} Bart Payment Gateway. Secured by Solana
+            Blockchain.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -357,10 +710,18 @@ function PaymentContent() {
 // Fallback component for Suspense
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="flex flex-col items-center">
-        <Loader className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="mt-4 text-gray-600">Loading payment details...</p>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex flex-col items-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+        <div className="w-16 h-16 relative mb-6">
+          <div className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-purple-200 dark:border-purple-900"></div>
+          <div className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-transparent border-t-purple-600 animate-spin"></div>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+          Loading Payment Gateway
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300">
+          Please wait while we prepare your checkout experience...
+        </p>
       </div>
     </div>
   );

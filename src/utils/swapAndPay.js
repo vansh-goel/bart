@@ -113,7 +113,7 @@ export async function swapAndPay(
       throw new Error("Failed to get swap transaction");
     }
 
-    console.log("Swap transaction received");
+    console.log("Swap transaction received " + swapTransaction);
 
     // Step 3: Deserialize the versioned transaction
     const transactionBuffer = Buffer.from(swapTransaction, "base64");
