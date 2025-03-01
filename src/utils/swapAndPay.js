@@ -93,7 +93,7 @@ export async function swapAndPay(
       outputMint: USDC_MINT.toBase58(),
       amount: Math.ceil(amount).toString(),
       slippageBps,
-      swapMode: "ExactOut",
+      swapMode: "ExactIn",
     });
 
     if (!quoteResponse) {
